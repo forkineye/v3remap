@@ -8,14 +8,17 @@ package v3remap;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -31,7 +34,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -47,12 +49,10 @@ public class V3remap extends javax.swing.JFrame {
     private File    fSourceSequence;
     private File    fTargetSequence;
 
-//    private Map<String, String> mapSource;
-//    private Map<String, String> mapTarget;
     private List<VixenNode> nlSource;
     private List<VixenNode> nlTarget;
 
-    private DefaultTableModel   model;
+    private DefaultTableModel   mdlMain;
     private JComboBox           cboxTargetNode;
     
     private class VixenNode {
@@ -92,13 +92,8 @@ public class V3remap extends javax.swing.JFrame {
     public V3remap() {
         initComponents();
         
-        //TODO: Instead of HashMaps, create Node k/v objects that w/ toString overrides
-        // - http://stackoverflow.com/questions/5661556/jcombobox-setting-label-and-value
-//        mapSource = new HashMap<>();
-//        mapTarget = new HashMap<>();
         nlSource = new ArrayList<>();
         nlTarget = new ArrayList<>();
-        
         cboxTargetNode = new JComboBox();
     }
 
@@ -108,6 +103,7 @@ public class V3remap extends javax.swing.JFrame {
         factory.setNamespaceAware(true);
         DocumentBuilder builder;
         Document doc = null;
+        list.clear();
         try {
             builder = factory.newDocumentBuilder();
             doc = builder.parse(file.getPath());
@@ -125,22 +121,27 @@ public class V3remap extends javax.swing.JFrame {
                         item.getAttributes().getNamedItem("name").getNodeValue()
                 ));
             }
-/*            
-            System.out.println("Node Names:");
-            for (Entry<String, String> entry : map.entrySet())
-                System.out.println("Key:" + entry.getKey() + " / Value: " + entry.getValue());
- */                  
         } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
             e.printStackTrace();
         }
     }
 
     private void exportRemap(File file) {
-        
+        try {
+            String content = new String(Files.readAllBytes(fSourceSequence.toPath()));
+            for (int i = 0; i < mdlMain.getRowCount(); i++) {
+                String find = ((VixenNode)(mdlMain.getValueAt(i, 0))).getId();
+                String replace = ((VixenNode)(mdlMain.getValueAt(i, 1))).getId();;
+                content = content.replaceAll(find, replace);
+            }
+            Files.write(file.toPath(), content.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     private void buildTable() {
-        model = new DefaultTableModel()  {
+        mdlMain = new DefaultTableModel()  {
             @Override
             public boolean isCellEditable(int row, int column) {
                 if (column == 0)
@@ -149,16 +150,16 @@ public class V3remap extends javax.swing.JFrame {
                     return true;
             }
         };
-        tblMain.setModel(model);
-        model.addColumn("Source Node");
-        model.addColumn("Target Node");
+        tblMain.setModel(mdlMain);
+        mdlMain.addColumn("Source Node");
+        mdlMain.addColumn("Target Node");
 
         tblMain.getColumnModel().getColumn(1).setCellEditor(
                 new DefaultCellEditor(cboxTargetNode));
-        tblMain.setRowSorter(new TableRowSorter<>(model));
+        tblMain.setRowSorter(new TableRowSorter<>(mdlMain));
 
         for (VixenNode node : nlSource)
-            model.addRow(new Object[] {
+            mdlMain.addRow(new Object[] {
                 node
             });
     }
@@ -337,6 +338,9 @@ public class V3remap extends javax.swing.JFrame {
     }//GEN-LAST:event_txtSequenceMouseClicked
 
     private void btnReMapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReMapActionPerformed
+        String path = fTargetConfig.getParentFile().getPath();
+        File dir = new File(path);
+        dlgFile.setSelectedFile(dir);
         if (dlgFile.showSaveDialog(this) == JFileChooser.APPROVE_OPTION)
             exportRemap(dlgFile.getSelectedFile());
     }//GEN-LAST:event_btnReMapActionPerformed
