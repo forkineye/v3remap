@@ -1,8 +1,19 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+ * Project: V3remap
+ * Copyright (c) 2014 Shelby Merrick
+ * http://www.forkineye.com
+ *
+ *  This program is provided free for you to use in any way that you wish,
+ *  subject to the laws and regulations where you are using it.  Due diligence
+ *  is strongly suggested before using this code.  Please give credit where due.
+ *
+ *  The Author makes no warranty of any kind, express or implied, with regard
+ *  to this program or the documentation contained in this document.  The
+ *  Author shall not be liable in any event for incidental or consequential
+ *  damages in connection with, or arising out of, the furnishing, performance
+ *  or use of these programs.
+ *
+ */ 
 
 package v3remap;
 
@@ -37,6 +48,8 @@ import org.xml.sax.SAXException;
  * @author sporadic
  */
 public class V3remap extends javax.swing.JFrame {
+    private static final String VERSION = "0.1";
+    
     private File    fSourceConfig;
     private File    fTargetConfig;
     private File    fSourceSequence;
@@ -93,10 +106,12 @@ public class V3remap extends javax.swing.JFrame {
      */
     public V3remap() {
         initComponents();
+
+        this.setTitle("V3Remap - v" + VERSION);
         
-//        nlSource = new TreeSet<>();
-//        nlTarget = new TreeSet<>();
-//        cboxTargetNode = new JComboBox();
+        // Center up UI
+        setSize(getPreferredSize());
+        setLocationRelativeTo(null);
     }
 
        
@@ -184,7 +199,7 @@ public class V3remap extends javax.swing.JFrame {
         btnReMap = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("v3remap");
+        setTitle("V3remap");
         setName("v3remap"); // NOI18N
 
         tblMain.setModel(new javax.swing.table.DefaultTableModel(
@@ -228,6 +243,7 @@ public class V3remap extends javax.swing.JFrame {
         });
 
         btnReMap.setText("ReMap");
+        btnReMap.setEnabled(false);
         btnReMap.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnReMapActionPerformed(evt);
@@ -284,6 +300,8 @@ public class V3remap extends javax.swing.JFrame {
     private void txtSourceConfigMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtSourceConfigMouseClicked
         dlgFile.setFileFilter(ffXML);
         dlgFile.setSelectedFile(fSourceConfig);
+        dlgFile.setDialogTitle("Select Source SystemConfig.xml");
+        
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fSourceConfig = dlgFile.getSelectedFile();
             txtSourceConfig.setText(fSourceConfig.getAbsolutePath());
@@ -295,6 +313,7 @@ public class V3remap extends javax.swing.JFrame {
     private void txtTargetConfigMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTargetConfigMouseClicked
         dlgFile.setFileFilter(ffXML);
         dlgFile.setSelectedFile(fTargetConfig);
+        dlgFile.setDialogTitle("Select Target SystemConfig.xml");
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fTargetConfig = dlgFile.getSelectedFile();
             txtTargetConfig.setText(fTargetConfig.getAbsolutePath());
@@ -309,9 +328,11 @@ public class V3remap extends javax.swing.JFrame {
     private void txtSequenceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtSequenceMouseClicked
         dlgFile.setFileFilter(ffTIM);
         dlgFile.setSelectedFile(fSourceSequence);
+        dlgFile.setDialogTitle("Select Sequence");
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fSourceSequence = dlgFile.getSelectedFile();
             txtSequence.setText(fSourceSequence.getAbsolutePath());
+            btnReMap.setEnabled(true);
         }
     }//GEN-LAST:event_txtSequenceMouseClicked
 
@@ -319,6 +340,7 @@ public class V3remap extends javax.swing.JFrame {
         String path = fTargetConfig.getParentFile().getPath();
         File dir = new File(path);
         dlgFile.setSelectedFile(dir);
+        dlgFile.setDialogTitle("Save Sequence");
         if (dlgFile.showSaveDialog(this) == JFileChooser.APPROVE_OPTION)
             exportRemap(dlgFile.getSelectedFile());
     }//GEN-LAST:event_btnReMapActionPerformed

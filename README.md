@@ -1,4 +1,4 @@
-v3remap
+V3remap
 =======
 A small Java application to assist the remapping of sequences to other profiles in Vixen 3.  Included in this repository is the entire Netbeans 8.0.1 project.
 

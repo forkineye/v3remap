@@ -7,7 +7,7 @@
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
-    <Property name="title" type="java.lang.String" value="v3remap"/>
+    <Property name="title" type="java.lang.String" value="V3remap"/>
     <Property name="name" type="java.lang.String" value="v3remap" noResource="true"/>
   </Properties>
   <SyntheticProperties>
@@ -149,6 +149,7 @@
     <Component class="javax.swing.JButton" name="btnReMap">
       <Properties>
         <Property name="text" type="java.lang.String" value="ReMap"/>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnReMapActionPerformed"/>
