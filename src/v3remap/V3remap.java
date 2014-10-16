@@ -16,7 +16,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
@@ -49,13 +53,13 @@ public class V3remap extends javax.swing.JFrame {
     private File    fSourceSequence;
     private File    fTargetSequence;
 
-    private List<VixenNode> nlSource;
-    private List<VixenNode> nlTarget;
+    private SortedSet<VixenNode> nlSource;
+    private SortedSet<VixenNode> nlTarget;
 
     private DefaultTableModel   mdlMain;
     private JComboBox           cboxTargetNode;
     
-    private class VixenNode {
+    private class VixenNode implements Comparable<VixenNode> {
         private String id;
         private String name;
         
@@ -84,6 +88,11 @@ public class V3remap extends javax.swing.JFrame {
         public String toString() {
             return name;
         }
+
+        @Override
+        public int compareTo(VixenNode vn) {
+            return this.name.compareTo(vn.getName());
+        }
     };
     
     /**
@@ -92,18 +101,18 @@ public class V3remap extends javax.swing.JFrame {
     public V3remap() {
         initComponents();
         
-        nlSource = new ArrayList<>();
-        nlTarget = new ArrayList<>();
+        nlSource = new TreeSet<>();
+        nlTarget = new TreeSet<>();
         cboxTargetNode = new JComboBox();
     }
 
        
-    private void parseNodeMap(File file, List<VixenNode> list) {
+    private void parseNodeMap(File file, SortedSet<VixenNode> set) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         DocumentBuilder builder;
         Document doc = null;
-        list.clear();
+        set.clear();
         try {
             builder = factory.newDocumentBuilder();
             doc = builder.parse(file.getPath());
@@ -111,12 +120,12 @@ public class V3remap extends javax.swing.JFrame {
             XPathFactory xpathFactory = XPathFactory.newInstance();
             XPath xpath = xpathFactory.newXPath();
             
-            XPathExpression expr = xpath.compile("/SystemConfig/Nodes/Node");
+            XPathExpression expr = xpath.compile("/SystemConfig/Nodes//Node");
             NodeList nlist = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
             
             for (int i = 0; i < nlist.getLength(); i++) {
                 Node item = nlist.item(i);
-                list.add(new VixenNode(
+                set.add(new VixenNode(
                         item.getAttributes().getNamedItem("id").getNodeValue(),
                         item.getAttributes().getNamedItem("name").getNodeValue()
                 ));
@@ -193,24 +202,9 @@ public class V3remap extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Source Node", "Target Node"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Object.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, true
-            };
 
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
             }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
+        ));
         jScrollPane1.setViewportView(tblMain);
 
         jLabel1.setText("Source Configuration");
@@ -315,12 +309,6 @@ public class V3remap extends javax.swing.JFrame {
             fTargetConfig = dlgFile.getSelectedFile();
             txtTargetConfig.setText(fTargetConfig.getAbsolutePath());
             parseNodeMap(fTargetConfig, nlTarget);
-            Collections.sort(nlTarget, new Comparator<VixenNode>() {
-                @Override
-                public int compare(VixenNode node1, VixenNode node2) {
-                    return node1.getName().compareTo(node2.getName());
-                }
-            });
             cboxTargetNode.removeAllItems();
             for (VixenNode node : nlTarget) {
                 cboxTargetNode.addItem(node);
