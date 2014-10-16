@@ -8,21 +8,10 @@ package v3remap;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -52,17 +41,21 @@ public class V3remap extends javax.swing.JFrame {
     private File    fTargetConfig;
     private File    fSourceSequence;
     private File    fTargetSequence;
-
-    private SortedSet<VixenNode> nlSource;
-    private SortedSet<VixenNode> nlTarget;
-
+    
     private DefaultTableModel   mdlMain;
-    private JComboBox           cboxTargetNode;
+    
+    private final JComboBox cboxTargetNode = new JComboBox();
+    
+    private final SortedSet<VixenNode>  nlSource = new TreeSet<>();
+    private final SortedSet<VixenNode>  nlTarget = new TreeSet<>();
+
+    private final FileNameExtensionFilter ffXML = new FileNameExtensionFilter("XML Files", "xml");
+    private final FileNameExtensionFilter ffTIM = new FileNameExtensionFilter("Vixen 3 Sequence Files", "tim");
     
     private class VixenNode implements Comparable<VixenNode> {
         private String id;
         private String name;
-        
+                
         public VixenNode(String id, String name) {
             this.id = id;
             this.name = name;
@@ -101,21 +94,19 @@ public class V3remap extends javax.swing.JFrame {
     public V3remap() {
         initComponents();
         
-        nlSource = new TreeSet<>();
-        nlTarget = new TreeSet<>();
-        cboxTargetNode = new JComboBox();
+//        nlSource = new TreeSet<>();
+//        nlTarget = new TreeSet<>();
+//        cboxTargetNode = new JComboBox();
     }
 
        
     private void parseNodeMap(File file, SortedSet<VixenNode> set) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
-        DocumentBuilder builder;
-        Document doc = null;
         set.clear();
         try {
-            builder = factory.newDocumentBuilder();
-            doc = builder.parse(file.getPath());
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(file.getPath());
             
             XPathFactory xpathFactory = XPathFactory.newInstance();
             XPath xpath = xpathFactory.newXPath();
@@ -125,10 +116,11 @@ public class V3remap extends javax.swing.JFrame {
             
             for (int i = 0; i < nlist.getLength(); i++) {
                 Node item = nlist.item(i);
-                set.add(new VixenNode(
+                VixenNode vn = new VixenNode(
                         item.getAttributes().getNamedItem("id").getNodeValue(),
                         item.getAttributes().getNamedItem("name").getNodeValue()
-                ));
+                );
+                set.add(vn);
             }
         } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
             e.printStackTrace();
@@ -139,9 +131,10 @@ public class V3remap extends javax.swing.JFrame {
         try {
             String content = new String(Files.readAllBytes(fSourceSequence.toPath()));
             for (int i = 0; i < mdlMain.getRowCount(); i++) {
-                String find = ((VixenNode)(mdlMain.getValueAt(i, 0))).getId();
-                String replace = ((VixenNode)(mdlMain.getValueAt(i, 1))).getId();;
-                content = content.replaceAll(find, replace);
+                VixenNode find = (VixenNode)(mdlMain.getValueAt(i, 0));
+                VixenNode replace = (VixenNode)(mdlMain.getValueAt(i, 1));
+                if (replace != null) 
+                    content = content.replaceAll(find.getId(), replace.getId());
             }
             Files.write(file.toPath(), content.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
@@ -153,10 +146,7 @@ public class V3remap extends javax.swing.JFrame {
         mdlMain = new DefaultTableModel()  {
             @Override
             public boolean isCellEditable(int row, int column) {
-                if (column == 0)
-                    return false;
-                else
-                    return true;
+                return column != 0;
             }
         };
         tblMain.setModel(mdlMain);
@@ -292,7 +282,7 @@ public class V3remap extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSourceConfigMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtSourceConfigMouseClicked
-        dlgFile.setFileFilter(new FileNameExtensionFilter("XML Files", "xml"));
+        dlgFile.setFileFilter(ffXML);
         dlgFile.setSelectedFile(fSourceConfig);
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fSourceConfig = dlgFile.getSelectedFile();
@@ -303,7 +293,7 @@ public class V3remap extends javax.swing.JFrame {
     }//GEN-LAST:event_txtSourceConfigMouseClicked
 
     private void txtTargetConfigMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtTargetConfigMouseClicked
-        dlgFile.setFileFilter(new FileNameExtensionFilter("XML Files", "xml"));
+        dlgFile.setFileFilter(ffXML);
         dlgFile.setSelectedFile(fTargetConfig);
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fTargetConfig = dlgFile.getSelectedFile();
@@ -317,7 +307,7 @@ public class V3remap extends javax.swing.JFrame {
     }//GEN-LAST:event_txtTargetConfigMouseClicked
 
     private void txtSequenceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtSequenceMouseClicked
-        dlgFile.setFileFilter(new FileNameExtensionFilter("Vixen 3 Sequence Files", "tim"));
+        dlgFile.setFileFilter(ffTIM);
         dlgFile.setSelectedFile(fSourceSequence);
         if (dlgFile.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             fSourceSequence = dlgFile.getSelectedFile();
